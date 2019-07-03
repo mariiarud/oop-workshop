@@ -113,6 +113,6 @@ public class CheckoutServiceTest {
         checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1212121212121L)));
         Check check = checkoutService.closeCheck();
 
-        assertThat(check.getTotalPoints(), is(17));
+        assertThat(check.getTotalPoints(), is(10));
     }
 }
