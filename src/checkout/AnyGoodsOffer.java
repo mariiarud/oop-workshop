@@ -10,8 +10,12 @@ public class AnyGoodsOffer extends Offer {
     }
 
     @Override
-    public void apply(Check check) {
-        if (totalCost <= check.getTotalCost())
-            check.addPoints(points);
+    protected boolean offerVerification(Check check) {
+        return (totalCost <= check.getTotalCost());
+    }
+
+    @Override
+    protected void applyOffer(Check check) {
+        check.addPoints(points);
     }
 }

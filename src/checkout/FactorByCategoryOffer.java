@@ -15,9 +15,13 @@ public class FactorByCategoryOffer extends Offer {
     }
 
     @Override
-    public void apply(Check check) {
+    protected boolean offerVerification(Check check) {
+        return (shelfLife.after(Calendar.getInstance().getTime()) || shelfLife.equals(Calendar.getInstance().getTime()));
+    }
+
+    @Override
+    protected void applyOffer(Check check) {
         int points = check.getCostByCategory(category);
-        if(shelfLife.after(Calendar.getInstance().getTime()) || shelfLife.equals(Calendar.getInstance().getTime()))
-            check.addPoints(points * (factor - 1));
+        check.addPoints(points * (factor - 1));
     }
 }
