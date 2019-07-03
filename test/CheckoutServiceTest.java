@@ -2,6 +2,8 @@ import checkout.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -84,7 +86,7 @@ public class CheckoutServiceTest {
         checkoutService.addProduct(milk_7);
         checkoutService.addProduct(bred_3);
 
-        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2));
+        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1593766320000L)));
         Check check = checkoutService.closeCheck();
 
         assertThat(check.getTotalPoints(), is(31));
@@ -92,6 +94,12 @@ public class CheckoutServiceTest {
 
     @Test
     void useOffer_ShelfLife(){
+        checkoutService.addProduct(milk_7);
+        checkoutService.addProduct(bred_3);
 
+        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1212121212121L)));
+        Check check = checkoutService.closeCheck();
+
+        assertThat(check.getTotalPoints(), is(17));
     }
 }
