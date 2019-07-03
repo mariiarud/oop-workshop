@@ -93,6 +93,19 @@ public class CheckoutServiceTest {
     }
 
     @Test
+    void useOffer__beforeCloseCheck() {
+        checkoutService.addOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1593766320000L)));
+
+        checkoutService.addProduct(milk_7);
+        checkoutService.addProduct(milk_7);
+        checkoutService.addProduct(bred_3);
+
+        Check check = checkoutService.closeCheck();
+
+        assertThat(check.getTotalPoints(), is(31));
+    }
+
+    @Test
     void useOffer_ShelfLife(){
         checkoutService.addProduct(milk_7);
         checkoutService.addProduct(bred_3);
