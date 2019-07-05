@@ -3,8 +3,8 @@ package checkout;
 public class Product {
     final int price;
     final String name;
-    Category category;
-    Trademark trademark;
+    public Category category;
+    public Trademark trademark;
 
     public Product(int price, String name, Category category, Trademark trademark) {
         this.price = price;

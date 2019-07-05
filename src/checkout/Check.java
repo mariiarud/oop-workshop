@@ -2,18 +2,19 @@ package checkout;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class Check {
     private List<Product> products = new ArrayList<>();
     private int points = 0;
-    private int discounts = 0;
+    private List<Discount> discounts = new ArrayList<>();
 
     public int getTotalCost() {
         int totalCost = 0;
         for (Product product : this.products) {
             totalCost += product.price;
         }
-        totalCost -= discounts;
+        totalCost -= getTotalDiscount();
         return totalCost;
     }
 
@@ -25,54 +26,49 @@ public class Check {
         return getTotalCost() + points;
     }
 
-    void addPoints(int points) {
-        this.points += points;
+    public void addPoints(int points) { this.points += points; }
+
+    public void addDiscount(Discount discount){
+        discounts.add(discount);
     }
 
-    int getCostByCategory(Category category) {
+    int getTotalDiscount(){
+        return discounts.stream()
+                .mapToInt(d -> d.priceReduction)
+                .reduce( 0, (a, b) -> a + b);
+    }
+
+    public int getTotalCostByCondition(Predicate<Product> productPredicate) {
         return products.stream()
-                .filter(p -> p.category == category)
+                .filter(productPredicate)
                 .mapToInt(p -> p.price)
                 .reduce(0, (a, b) -> a + b);
     }
 
-    void addDiscount(Trademark trademark){
-        discounts += products.stream()
-                    .filter(p -> p.trademark == trademark)
-                    .mapToInt(p -> (p.price/2))
-                    .reduce(0, (a, b) -> a + b);
-    }
-
-    void addDiscount(Product product){
-        discounts += products.stream()
+    public int getCostOfSpecificProduct(Product product) {
+        return products.stream()
                 .filter(p -> p == product)
-                .mapToInt(p -> (p.price/2))
-                .reduce(0, (a, b) -> a + b);
+                .mapToInt(p -> p.price)
+                .findFirst()
+                .orElse(0);
     }
 
-    void addPresent(Trademark trademark) {
-        int n = 0;
-        for(Product product: products){
-            if(product.trademark == trademark){
-                n++;
-                if(n>2){
-                    discounts+=product.price;
-                    n=0;
-                }
-            }
-        }
+    public Product getProductByTrademark(Trademark trademark) {
+        return products.stream()
+                .filter(p -> p.trademark == trademark)
+                .findFirst()
+                .orElse(null);
     }
 
-    void addPresent(Product product) {
-        int n = 0;
-        for(Product p: products){
-            if(p == product){
-                n++;
-                if(n>2){
-                    discounts+=product.price;
-                    n=0;
-                }
-            }
-        }
+    public boolean verifyIfProductIsInCheck(Predicate<Product> productPredicate) {
+        return products.stream()
+                .anyMatch(productPredicate);
+    }
+
+    public boolean verifyIfPresentIsAvailable(Trademark trademark) {
+        long l = products.stream()
+                .filter(p -> p.trademark == trademark)
+                .count();
+        return (l>2);
     }
 }

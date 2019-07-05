@@ -1,27 +1,36 @@
 import checkout.*;
+import checkout.offers.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class CheckoutServiceTest {
 
-    private Product milk_7;
-    private CheckoutService checkoutService;
     private Product bred_3;
     private Product flour_6;
+    private Product milk_7;
+    private CheckoutService checkoutService;
+    private Trademark trademark;
+    LocalDate yesterday;
+    LocalDate tomorrow;
 
     @BeforeEach
     void setUp() {
         checkoutService = new CheckoutService();
         checkoutService.openCheck();
 
-        milk_7 = new Product(7, "Milk", Category.MILK, Trademark.MILK_CORPORATION);
+        trademark = new Trademark(1, "FLOUR_CORPORATION");
+
         bred_3 = new Product(3, "Bred");
-        flour_6 = new Product(6, "Flour", Trademark.FLOUR_CORPORATION);
+        flour_6 = new Product(6, "Flour", trademark);
+        milk_7 = new Product(7, "Milk", Category.MILK);
+
+        yesterday = LocalDate.now().minusDays(1);
+        tomorrow = LocalDate.now().plusDays(1);
     }
 
     @Test
@@ -66,7 +75,7 @@ public class CheckoutServiceTest {
         checkoutService.addProduct(milk_7);
         checkoutService.addProduct(bred_3);
 
-        checkoutService.useOffer(new AnyGoodsOffer(6, 2));
+        checkoutService.useOffer(new AnyGoodsOffer(tomorrow,6, 2));
         Check check = checkoutService.closeCheck();
 
         assertThat(check.getTotalPoints(), is(12));
@@ -76,7 +85,7 @@ public class CheckoutServiceTest {
     void useOffer__whenCostLessThanRequired__doNothing() {
         checkoutService.addProduct(bred_3);
 
-        checkoutService.useOffer(new AnyGoodsOffer(6, 2));
+        checkoutService.useOffer(new AnyGoodsOffer(tomorrow,6, 2));
         Check check = checkoutService.closeCheck();
 
         assertThat(check.getTotalPoints(), is(3));
@@ -88,7 +97,7 @@ public class CheckoutServiceTest {
         checkoutService.addProduct(milk_7);
         checkoutService.addProduct(bred_3);
 
-        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1593766320000L)));
+        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, tomorrow));
         Check check = checkoutService.closeCheck();
 
         assertThat(check.getTotalPoints(), is(31));
@@ -96,7 +105,7 @@ public class CheckoutServiceTest {
 
     @Test
     void useOffer__beforeCloseCheck() {
-        checkoutService.addOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1593766320000L)));
+        checkoutService.addOffer(new FactorByCategoryOffer(Category.MILK, 2, tomorrow));
 
         checkoutService.addProduct(milk_7);
         checkoutService.addProduct(milk_7);
@@ -107,48 +116,66 @@ public class CheckoutServiceTest {
     }
 
     @Test
-    void useOffer_shelfLife(){
+    void useOffer_factorByExpiration(){
         checkoutService.addProduct(milk_7);
         checkoutService.addProduct(bred_3);
 
-        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1212121212121L)));
-        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, new Date(1593766320000L)));
+        checkoutService.useOffer(new FactorByCategoryOffer(Category.MILK, 2, yesterday));
         Check check = checkoutService.closeCheck();
 
-        assertThat(check.getTotalPoints(), is(17));
+        assertThat(check.getTotalPoints(), is(10));
     }
 
     @Test
-    void useOffer_BonusByTrademark(){
+    void useOffer_DiscountByTrademark(){
         checkoutService.addProduct(milk_7);
+        checkoutService.addProduct(flour_6);
         checkoutService.addProduct(bred_3);
-        checkoutService.addProduct(flour_6);
-        checkoutService.addProduct(flour_6);
-        checkoutService.addProduct(flour_6);
 
-        checkoutService.useOffer(new BonusByTrademarkOffer("-50%", new Date(1593766320000L), Trademark.MILK_CORPORATION));
-        checkoutService.useOffer(new BonusByTrademarkOffer("present", new Date(1593766320000L), Trademark.FLOUR_CORPORATION));
+        checkoutService.useOffer(new PercentageDiscountByTrademarkOffer(tomorrow, trademark));
 
         Check check = checkoutService.closeCheck();
 
-        assertThat(check.getTotalCost(), is(19));
+        assertThat(check.getTotalCost(), is(13));
     }
 
     @Test
-    void useOffer_BonusByProduct(){
+    void useOffer_DiscountByProduct(){
         checkoutService.addProduct(milk_7);
-        checkoutService.addProduct(milk_7);
-        checkoutService.addProduct(bred_3);
-        checkoutService.addProduct(bred_3);
-        checkoutService.addProduct(bred_3);
         checkoutService.addProduct(flour_6);
+        checkoutService.addProduct(bred_3);
 
-
-        checkoutService.useOffer(new BonusByProductOffer("-50%", new Date(1593766320000L), milk_7));
-        checkoutService.useOffer(new BonusByProductOffer("present", new Date(1593766320000L), bred_3));
+        checkoutService.useOffer(new PercentageDiscountByProductOffer(tomorrow, bred_3));
 
         Check check = checkoutService.closeCheck();
 
-        assertThat(check.getTotalCost(), is(20));
+        assertThat(check.getTotalCost(), is(15));
     }
+
+    @Test
+    void useOffer_PresentByTrademark(){
+        checkoutService.addProduct(flour_6);
+        checkoutService.addProduct(flour_6);
+        checkoutService.addProduct(flour_6);
+
+        checkoutService.useOffer(new PresentByTrademarkOffer(tomorrow, trademark));
+
+        Check check = checkoutService.closeCheck();
+
+        assertThat(check.getTotalCost(), is(13));
+    }
+
+    @Test
+    void useOffer_PresentByProduct(){
+        checkoutService.addProduct(flour_6);
+        checkoutService.addProduct(flour_6);
+        checkoutService.addProduct(flour_6);
+
+        checkoutService.useOffer(new PresentByProductOffer(tomorrow, flour_6));
+
+        Check check = checkoutService.closeCheck();
+
+        assertThat(check.getTotalCost(), is(13));
+    }
+
 }
